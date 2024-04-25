@@ -64,5 +64,9 @@ class TestLambdaHandler(unittest.TestCase):
         # Check put item
         pass
 
+    def test_keyerror(self):
+        # Check KeyError exception
+        pass
+
 if __name__ == '__main__':
     unittest.main()
