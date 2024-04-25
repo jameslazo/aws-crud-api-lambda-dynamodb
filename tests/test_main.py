@@ -5,12 +5,13 @@ import boto3
 import json
 from lambda_handler import main
 
+# Set up variables
+table_name = 'http-crud-tutorial-items'
+
 class TestLambdaHandler(unittest.TestCase):
     @classmethod
     @mock_aws
     def setUpClass(cls):
-        # Set up variables
-        table_name = 'http-crud-tutorial-items'
 
         # Create a dummy session with dummy credentials
         session = boto3.Session(aws_access_key_id='testing', aws_secret_access_key='testing')
@@ -38,7 +39,7 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_table_exists(self):
         # Check for table
-        pass
+        self.assertTrue(self.dynamodb.Table(table_name))
 
     def test_table_name(self):
         # Check table name
