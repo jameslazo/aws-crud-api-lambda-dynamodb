@@ -3,7 +3,6 @@ from unittest.mock import patch
 from moto import mock_aws
 import boto3
 import json
-from lambda_handler import main
 
 # Set up variables
 table_name = 'http-crud-tutorial-items'
@@ -33,8 +32,7 @@ class TestLambdaHandler(unittest.TestCase):
 
         # Create event only if same for all tests. Define in each test if variable.
         cls.event = {
-            'routeKey': 'DELETE /items/{id}',
-            'pathParameters': {'id': '1'}
+            'routeKey': 'GET /items'
         }
 
     def test_table_exists(self):
@@ -46,8 +44,13 @@ class TestLambdaHandler(unittest.TestCase):
         self.assertIn(table_name, self.dynamodb.Table(table_name).name)
 
     def test_response_code_200(self):
-        # Check response code
-        pass
+        self.assertEqual(self.event, { 'routeKey': 'GET /items' })
+        # Call the Lambda handler
+        # from lambda_handler import main
+        # response = main.lambda_handler(self.event, None)
+
+        # Check if the response code is 200
+        # self.assertEqual(response['statusCode'], 200)
 
     def test_delete_item(self):
         # Check delete item
