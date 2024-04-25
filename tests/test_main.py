@@ -43,7 +43,7 @@ class TestLambdaHandler(unittest.TestCase):
 
     def test_table_name(self):
         # Check table name
-        pass
+        self.assertIn(table_name, self.dynamodb.Table(table_name).name)
 
     def test_response_code_200(self):
         # Check response code
