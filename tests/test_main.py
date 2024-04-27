@@ -7,9 +7,9 @@ import json
 # Set up variables
 table_name = 'http-crud-tutorial-items'
 
+@mock_aws
 class TestLambdaHandler(unittest.TestCase):
     @classmethod
-    @mock_aws
     def setUpClass(cls):
 
         # Create a dummy session with dummy credentials
@@ -44,13 +44,14 @@ class TestLambdaHandler(unittest.TestCase):
         self.assertIn(table_name, self.dynamodb.Table(table_name).name)
 
     def test_response_code_200(self):
-        self.assertEqual(self.event, { 'routeKey': 'GET /items' })
         # Call the Lambda handler
-        # from lambda_handler import main
-        # response = main.lambda_handler(self.event, None)
+        # from moto.core import patch_resource
+        # patch_resource(dynamodb)
+        from lambda_handler import main
+        response = main.lambda_handler(self.event, None)
 
         # Check if the response code is 200
-        # self.assertEqual(response['statusCode'], 200)
+        self.assertEqual(response['statusCode'], 200)
 
     def test_delete_item(self):
         # Check delete item

@@ -2,10 +2,7 @@ import json
 import boto3
 from decimal import Decimal
 
-client = boto3.client('dynamodb')
-dynamodb = boto3.resource("dynamodb")
-table = dynamodb.Table('http-crud-tutorial-items')
-tableName = 'http-crud-tutorial-items'
+
 
 
 def lambda_handler(event, context):
@@ -15,6 +12,10 @@ def lambda_handler(event, context):
     headers = {
         "Content-Type": "application/json"
     }
+    # client = boto3.client('dynamodb')
+    dynamodb = boto3.resource("dynamodb")
+    table_name = 'http-crud-tutorial-items'
+    table = dynamodb.Table(table_name)
 
     try:
         if event['routeKey'] == "DELETE /items/{id}":
