@@ -12,7 +12,7 @@ def lambda_handler(event, context):
     headers = {
         "Content-Type": "application/json"
     }
-    # client = boto3.client('dynamodb')
+    client = boto3.client('dynamodb')
     dynamodb = boto3.resource("dynamodb")
     table_name = 'http-crud-tutorial-items'
     table = dynamodb.Table(table_name)
@@ -30,7 +30,7 @@ def lambda_handler(event, context):
                 {'price': float(body['price']), 'id': body['id'], 'name': body['name']}]
             body = responseBody
         elif event['routeKey'] == "GET /items":
-            body = table.scan()
+            body = client.scan(TableName=table_name)
             body = body["Items"]
             print("ITEMS----")
             print(body)
