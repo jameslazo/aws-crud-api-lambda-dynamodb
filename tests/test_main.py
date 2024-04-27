@@ -7,6 +7,7 @@ import json
 
 # Set up variables
 table_name = 'http-crud-tutorial-items'
+region = os.environ["AWS_DEFAULT_REGION"]
 
 @mock_aws
 class TestLambdaHandler(unittest.TestCase):
@@ -19,7 +20,7 @@ class TestLambdaHandler(unittest.TestCase):
         config = Config(proxies={"https": "http://localhost:5005"})
         # Create a mock DynamoDB table.
         # cls.dynamodb = session.resource('dynamodb', region_name='us-east-1')
-        cls.dynamodb = boto3.resource("dynamodb", region_name=os.environ["AWS_DEFAULT_REGION"], config=config, verify=False)
+        cls.dynamodb = boto3.resource("dynamodb", region_name=region, config=config, verify=False)
 
         # Create the DynamoDB table
         cls.dynamodb.create_table(
@@ -34,8 +35,9 @@ class TestLambdaHandler(unittest.TestCase):
         table.put_item(Item={'id': '1', 'name': 'Test', 'price': 10})
 
         # Create event only if same for all tests. Define in each test if variable.
+        eventkey = ""
         cls.event = {
-            'routeKey': 'GET /items'
+            'routeKey': eventkey
         }
 
     def test_table_exists(self):
@@ -47,9 +49,11 @@ class TestLambdaHandler(unittest.TestCase):
         self.assertIn(table_name, self.dynamodb.Table(table_name).name)
 
     def test_response_code_200(self):
-        # Call the Lambda handler
-        # from moto.core import patch_resource
-        # patch_resource(dynamodb)
+        # update event key
+        eventkey = "Get /items/{id}"
+        self.event['routeKey'] = eventkey
+
+        # import function within test after mock services are created
         from lambda_handler import main
         response = main.lambda_handler(self.event, None)
 

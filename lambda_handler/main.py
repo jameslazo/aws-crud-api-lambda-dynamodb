@@ -55,9 +55,7 @@ def lambda_handler(event, context):
     body = json.dumps(body)
     res = {
         "statusCode": statusCode,
-        "headers": {
-            "Content-Type": "application/json"
-        },
+        "headers": headers,
         "body": body
     }
     return res
