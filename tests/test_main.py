@@ -2,6 +2,7 @@ import unittest
 from unittest.mock import patch
 from moto import mock_aws
 import boto3
+import os
 import json
 
 # Set up variables
@@ -13,10 +14,12 @@ class TestLambdaHandler(unittest.TestCase):
     def setUpClass(cls):
 
         # Create a dummy session with dummy credentials
-        session = boto3.Session(aws_access_key_id='testing', aws_secret_access_key='testing')
-
+        # session = boto3.Session(aws_access_key_id='testing', aws_secret_access_key='testing')
+        from botocore.config import Config
+        config = Config(proxies={"https": "http://localhost:5005"})
         # Create a mock DynamoDB table.
-        cls.dynamodb = session.resource('dynamodb', region_name='us-east-1')
+        # cls.dynamodb = session.resource('dynamodb', region_name='us-east-1')
+        cls.dynamodb = boto3.resource("dynamodb", region_name=os.environ["AWS_DEFAULT_REGION"], config=config, verify=False)
 
         # Create the DynamoDB table
         cls.dynamodb.create_table(
