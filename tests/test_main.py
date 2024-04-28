@@ -1,6 +1,7 @@
 import unittest
 from moto import mock_aws
 import boto3
+from lambda_handler import main
 import os
 
 
@@ -62,8 +63,8 @@ class TestLambdaHandler(unittest.TestCase):
         # mock resources
         spinup_ddb("get/delete")
 
-        # import function within test after mock services are created
-        from lambda_handler import main
+        # call function within test after mock services are created
+        
         response = main.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], 200)
 
@@ -76,9 +77,7 @@ class TestLambdaHandler(unittest.TestCase):
         # mock resources
         spinup_ddb("get/delete")
 
-        # import function within test after mock services are created
-        from lambda_handler import main
-        
+        # call function within test after mock services are created        
         response = main.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], 200)
         # self.assertIsNone()
@@ -92,8 +91,7 @@ class TestLambdaHandler(unittest.TestCase):
         # mock resources
         spinup_ddb("get/delete")
 
-        # import function within test after mock services are created
-        from lambda_handler import main
+        # call function within test after mock services are created
         response = main.lambda_handler(event, context)
         self.assertEqual(response['body'], {'partitionKey': {'S': 'id'}, 'name': {'S': 'Test'}, 'price': {'N': '10'}})
 
@@ -106,8 +104,7 @@ class TestLambdaHandler(unittest.TestCase):
         # mock resources
         spinup_ddb("get/delete")
 
-        # import function within test after mock services are created
-        from lambda_handler import main
+        # call function within test after mock services are created
         response = main.lambda_handler(event, context)
         self.assertEqual(response['body'], [{'partitionKey': {'S': 'id'}, 'name': {'S': 'Test'}, 'price': {'N': '10'}}])
 
@@ -124,15 +121,13 @@ class TestLambdaHandler(unittest.TestCase):
         # mock resources
         spinup_ddb("put")
 
-        # import function within test after mock services are created
-        from lambda_handler import main
+        # call function within test after mock services are created
         response = main.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], 200)
 
     def test_keyerror(self):
         event = {}
-        # import function within test after mock services are created
-        from lambda_handler import main
+        # call function within test after mock services are created
         response = main.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], 400)
 
