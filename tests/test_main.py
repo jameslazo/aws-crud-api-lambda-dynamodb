@@ -1,109 +1,140 @@
 import unittest
-from unittest.mock import patch
 from moto import mock_aws
 import boto3
 import os
-import json
 
 
+
+table_name = 'http-crud-tutorial-items'
+region = os.environ["AWS_DEFAULT_REGION"]
+context = {}
+
+@mock_aws
+def spinup_ddb(operation="exists"):
+    # Create boto3 session
+    boto3.setup_default_session()
+
+    # Create DDB client
+    client = boto3.client("dynamodb", region_name=region)
+
+    # Create the DDB table
+    client.create_table(
+        TableName=table_name,
+        KeySchema=[{'AttributeName': 'partitionKey', 'KeyType': 'HASH'}],
+        AttributeDefinitions=[{'AttributeName': 'partitionKey', 'AttributeType': 'S'}],
+        ProvisionedThroughput={'ReadCapacityUnits': 5, 'WriteCapacityUnits': 5}
+    )
+
+    # Branch test paths
+    if operation == "exists":
+        return client.describe_table(TableName=table_name)
+    elif operation == "get/delete":
+        client.put_item(
+            TableName=table_name,
+            Item={
+                'partitionKey': {'S': 'id'},
+                'name': {'S': 'Test'},
+                'price': {'N': '10'}
+            }
+        )
 
 @mock_aws
 class TestLambdaHandler(unittest.TestCase):
-    @classmethod
-    def setUpClass(cls):
-        # Set up variables
-        cls.table_name = 'http-crud-tutorial-items'
-        cls.region = os.environ["AWS_DEFAULT_REGION"]
-
-        # Create a dummy session with dummy credentials
-        # cls.session = boto3.Session(aws_access_key_id='testing', aws_secret_access_key='testing')
-        from botocore.config import Config
-        cls.config = Config(proxies={"https": "http://localhost:5005"})
-        # Create a mock DynamoDB table.
-        # cls.dynamodb = cls.session.resource('dynamodb', region_name='us-east-1')
-        cls.client = boto3.client("dynamodb", region_name=cls.region, config=cls.config, verify=False)
-        cls.dynamodb = boto3.resource("dynamodb", region_name=cls.region, config=cls.config, verify=False)
-
-        # Create the DynamoDB table
-        cls.dynamodb.create_table(
-            TableName=cls.table_name,
-            KeySchema=[{'AttributeName': 'id', 'KeyType': 'HASH'}],
-            AttributeDefinitions=[{'AttributeName': 'id', 'AttributeType': 'S'}],
-            ProvisionedThroughput={'ReadCapacityUnits': 5, 'WriteCapacityUnits': 5}
-        )
-
-        # Initialize the visitor count value in DynamoDB to 0
-        cls.table = cls.dynamodb.Table(cls.table_name)
-        cls.table.put_item(Item={'id': '1', 'name': 'Test', 'price': 10})
-
-        # Initialize event
-        cls.event = {
-            'routeKey': ""
-        }
 
     def test_table_exists(self):
+        # mock table
+        response = spinup_ddb()
         # Check for table
-        self.assertTrue(self.table)
+        self.assertTrue(response)
 
     def test_table_name(self):
+        # mock table
+        tablename = spinup_ddb()["Table"]["TableName"]
         # Check table name
-        self.assertIn(self.table_name, self.table.name)
+        self.assertIn(tablename, table_name)
 
     def test_response_code_200(self):
-        # update event key
-        eventkey = "GET /items/1"
-        self.event['routeKey'] = eventkey
+        # initialize event
+        event = {}
+        eventkey = "GET /items/id"
+        event['routeKey'] = eventkey
+
+        # mock resources
+        spinup_ddb("get/delete")
 
         # import function within test after mock services are created
         from lambda_handler import main
-        response = main.lambda_handler(self.event, None)
-
-        # Check if the response code is 200
+        response = main.lambda_handler(event, context)
         self.assertEqual(response['statusCode'], 200)
 
     def test_delete_item(self):
-        # update event key
-        # event = {}
-        # eventkey = "DELETE /items/{id}"
-        # self.event['routeKey'] = eventkey
+        # initialize event
+        event = {}
+        eventkey = "DELETE /items/id"
+        event['routeKey'] = eventkey
+
+        # mock resources
+        spinup_ddb("get/delete")
 
         # import function within test after mock services are created
-        # from lambda_handler import main
-        # main.lambda_handler(self.event, None)
-
-        # Check delete item
+        from lambda_handler import main
+        
+        response = main.lambda_handler(event, context)
+        self.assertEqual(response['statusCode'], 200)
         # self.assertIsNone()
-        pass
 
     def test_get_item(self):
-        # Check get item
-        pass
+        # initialize event
+        event = {}
+        eventkey = "GET /items/id"
+        event['routeKey'] = eventkey
 
-    @mock_aws
-    def test_scan_table(self):
-        # update event key
-        eventkey = "GET /items"
-        self.event['routeKey'] = eventkey
-        # table = self.dynamodb.Table(self.table_name)
-        response = self.client.scan(TableName=self.table_name)
-        self.assertTrue('Items' in response)
-        print("Scanned items: ", response['Items'])
+        # mock resources
+        spinup_ddb("get/delete")
 
         # import function within test after mock services are created
-        # from lambda_handler import main
-        # response = main.lambda_handler(self.event, None)
+        from lambda_handler import main
+        response = main.lambda_handler(event, context)
+        self.assertEqual(response['body'], {'partitionKey': {'S': 'id'}, 'name': {'S': 'Test'}, 'price': {'N': '10'}})
 
-        # Check scan table
-        # print(response['body'])
-        # self.assertEqual(response['body'], 200)
+    def test_scan_table(self):
+        # initialize event
+        event = {}
+        eventkey = "GET /items"
+        event['routeKey'] = eventkey
+
+        # mock resources
+        spinup_ddb("get/delete")
+
+        # import function within test after mock services are created
+        from lambda_handler import main
+        response = main.lambda_handler(event, context)
+        self.assertEqual(response['body'], [{'partitionKey': {'S': 'id'}, 'name': {'S': 'Test'}, 'price': {'N': '10'}}])
 
     def test_put_item(self):
-        # Check put item
-        pass
+        # initialize event
+        event = {}
+        eventkey = "PUT /items/id"
+        event['routeKey'] = eventkey
+        event['body'] = {
+            'name': {'S': 'PutTest'},
+            'price': {'N': '50'}
+        }
+
+        # mock resources
+        spinup_ddb("put")
+
+        # import function within test after mock services are created
+        from lambda_handler import main
+        response = main.lambda_handler(event, context)
+        self.assertEqual(response['statusCode'], 200)
 
     def test_keyerror(self):
-        # Check KeyError exception
-        pass
+        event = {}
+        # import function within test after mock services are created
+        from lambda_handler import main
+        response = main.lambda_handler(event, context)
+        self.assertEqual(response['statusCode'], 400)
 
 if __name__ == '__main__':
     unittest.main()
