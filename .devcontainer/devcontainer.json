@@ -3,5 +3,7 @@
 	"features": {
 		"ghcr.io/devcontainers-contrib/features/actions-runner:1": {},
 		"ghcr.io/devcontainers-contrib/features/pipenv:2": {}
-	}
+	},
+	"updateContentCommand": ["pip install pipenv", "pipenv sync"],
+	"postAttachCommand": "pipenv shell"
 }
